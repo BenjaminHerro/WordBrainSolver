@@ -43,6 +43,9 @@ class WBDownloader:
 			raise Exception(f'{self.difficulty} is not supported.')
 			return
 
+		if not 'puzzles' in os.listdir():
+			os.mkdir(os.getcwd()+'\\puzzles')
+
 	def download_one_puzzle(self):
 		try:
 			endpoint = random.choice(self.difficulties[self.difficulty])
@@ -66,6 +69,7 @@ class WBDownloader:
 	def download_all_puzzles(self,from_endpoint=False):
 		for difficulty in tqdm(self.difficulties):
 			puzzle_data = []
+			by_endpoint = defaultdict(list)
 			for endpoint in self.difficulties[difficulty]:
 				puzzle_resp = requests.get(self.base_url + endpoint,headers=self.headers)
 				if not puzzle_resp.status_code == 200:
@@ -78,8 +82,12 @@ class WBDownloader:
 					puzzle = selected_puzzle.select('span.letterblock')[0]
 					puzzle_data.append({'puzzle':[[cell.text.upper() for cell in line] for line in \
 					list(chunks(puzzle.find_all('span'),len(puzzle.find_all('br'))))],'solution':solution})
+					by_endpoint[endpoint.split('/')[2]].append({'puzzle':[[cell.text.upper() for cell in line] for line in \
+					list(chunks(puzzle.find_all('span'),len(puzzle.find_all('br'))))],'solution':solution})
 			if from_endpoint:
-				
+				for endpoint in by_endpoint:
+					with open(os.getcwd()+'\\puzzles\\'+endpoint+'.json','w') as download_file:
+						json.dump(by_endpoint[endpoint],download_file)
 			else:
-				with open(difficulty+'.json','w') as download_file:
+				with open(os.getcwd()+'\\puzzles\\'+difficulty+'.json','w') as download_file:
 					json.dump(puzzle_data,download_file)

@@ -12,7 +12,7 @@ class WordBrain:
 
 	def __init__(self,
 		puzzle_fetch=False,
-		puzzle_fetch_difficulty='easy'
+		difficulty='easy'
 		):
 
 		if not 'dictionary.json' in os.listdir():
@@ -24,10 +24,13 @@ class WordBrain:
 			with open('dictionary.json') as d:
 				self.dictionary = json.load(d)
 
+		with open('all_word_brain_words.txt') as wbw:
+			self.word_brain_words = [w.strip('\n') for w in wbw.readlines()]
+
 		if not puzzle_fetch:
 			try:
-				puzzle_file = [e for e in os.listdir() if puzzle_fetch_difficulty in e][0]
-				with open(puzzle_file) as pf:
+				puzzle_file = [e for e in os.listdir(os.getcwd()+'\\puzzles') if difficulty in e][0]
+				with open(os.getcwd()+'\\puzzles\\'+puzzle_file) as pf:
 					self.puzzles = json.load(pf)
 					self.puzzle_located = random.choice(self.puzzles)
 
@@ -39,7 +42,7 @@ class WordBrain:
 				sys.exit()
 		else:
 			try:
-				self.downloader = WBDownloader(difficulty=puzzle_fetch_difficulty)
+				self.downloader = WBDownloader(difficulty=difficulty)
 			except Exception as e:
 				return e
 				sys.exit()
@@ -68,13 +71,16 @@ class WordBrain:
 		curr_word_length=None,
 		graph=None):
 
+		# if len(visited) == curr_word_length \
+		# and ''.join([graph[c[0]][c[1]] for c in visited]).lower() in self.dictionary:
+		print(visited)
 		if len(visited) == curr_word_length \
-		and ''.join([graph[c[0]][c[1]] for c in visited]).lower() in self.dictionary:
+		and ''.join([graph[c[0]][c[1]] for c in visited]).lower() in self.word_brain_words:
 			if not word_lengths:
 				self.total_possible_words.append(words + [''.join([graph[c[0]][c[1]] for c in visited])])
 				return
 			new_graph = self.rearrange_graph(visited,graph)
-			# print(new_graph)
+			print(new_graph)
 			cwl = word_lengths[0]
 			if len(word_lengths) == 1:
 				wl = []
