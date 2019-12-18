@@ -67,6 +67,7 @@ class WBDownloader:
 			return e
 
 	def download_all_puzzles(self,from_endpoint=False):
+		word_brain_words = []
 		for difficulty in tqdm(self.difficulties):
 			puzzle_data = []
 			by_endpoint = defaultdict(list)
@@ -89,5 +90,10 @@ class WBDownloader:
 					with open(os.getcwd()+'\\puzzles\\'+endpoint+'.json','w') as download_file:
 						json.dump(by_endpoint[endpoint],download_file)
 			else:
-				with open(os.getcwd()+'\\puzzles\\'+difficulty+'.json','w') as download_file:
+				for puzzle in puzzle_data:
+					word_brain_words += puzzle['solution']
+				with open(os.getcwd()+'\\puzzles\\'+difficulty+'.json','w') as download_file,\
+				open('all_word_brain_words.txt','w') as wbw:
 					json.dump(puzzle_data,download_file)
+					for word in set(word_brain_words):
+						print(word,file=wbw)

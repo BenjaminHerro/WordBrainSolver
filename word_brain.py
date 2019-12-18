@@ -24,8 +24,11 @@ class WordBrain:
 			with open('dictionary.json') as d:
 				self.dictionary = json.load(d)
 
+			self.dictionary_starts = {s:[w[:s] for w in self.dictionary] for s in range(2,20)}
+
 		with open('all_word_brain_words.txt') as wbw:
 			self.word_brain_words = [w.strip('\n') for w in wbw.readlines()]
+			self.word_brain_word_starts = {s:[w[:s] for w in self.word_brain_words] for s in range(2,20)}
 
 		if not puzzle_fetch:
 			try:
@@ -54,12 +57,15 @@ class WordBrain:
 
 		if self.puzzle:
 			self.grid_coords = [[(x,y) for y in range(len(i))] for x,i in enumerate(self.puzzle)]
-			self.total_avalable_coords = list(itertools.chain.from_iterable(self.grid_coords))
+			self.total_available_coords = list(itertools.chain.from_iterable(self.grid_coords))
 			self.words = defaultdict(list)
 			self.total_possible_words = []
 
 	def input_own_puzzle(self,puzzle,word_lengths):
 		self.puzzle = [[e.upper() for e in line] for line in puzzle]
+		self.grid_coords = [[(x,y) for y in range(len(i))] for x,i in enumerate(self.puzzle)]
+		self.total_available_coords = list(itertools.chain.from_iterable(self.grid_coords))
+		self.words = defaultdict(list)
 		self.solution = None
 		self.word_lengths = word_lengths
 
@@ -71,16 +77,29 @@ class WordBrain:
 		curr_word_length=None,
 		graph=None):
 
+		# if len(self.total_possible_words) > 2:
+		# 	return
+		# if len(visited) in range(2,20) \
+		# and not ''.join([graph[c[0]][c[1]] for c in visited]).lower() \
+		# in self.dictionary_starts[len(visited)]:
+		# 	return
 		# if len(visited) == curr_word_length \
 		# and ''.join([graph[c[0]][c[1]] for c in visited]).lower() in self.dictionary:
-		print(visited)
+		if len(self.total_possible_words) > 2:
+			return
+		if len(visited) in range(2,20) \
+		and not ''.join([graph[c[0]][c[1]] for c in visited]).lower() \
+		in self.word_brain_word_starts[len(visited)]:
+			return
 		if len(visited) == curr_word_length \
 		and ''.join([graph[c[0]][c[1]] for c in visited]).lower() in self.word_brain_words:
 			if not word_lengths:
 				self.total_possible_words.append(words + [''.join([graph[c[0]][c[1]] for c in visited])])
 				return
+			for line in graph:
+				print('|',' | '.join(line),'|',end='\n')
+			print()
 			new_graph = self.rearrange_graph(visited,graph)
-			print(new_graph)
 			cwl = word_lengths[0]
 			if len(word_lengths) == 1:
 				wl = []
@@ -113,19 +132,31 @@ class WordBrain:
 	def rearrange_graph(self,word,graph):
 		graph = deepcopy(graph)
 		for c in word:
-			graph[c[0]][c[1]] = ''
-		for i,line in enumerate(graph[:-1]):
+			graph[c[0]][c[1]] = ' '
+		graph_rev = graph[::-1]
+		for i,line in enumerate(graph_rev):
+			if i == len(graph_rev)-1:
+				continue
 			for j,letter in enumerate(line):
-				if letter and graph[i+1][j] == '':
-					graph[i+1][j] = letter
-					graph[i][j] = ''
-		return graph
+				if letter == ' ':
+					num_back = 0
+					while True:
+						if i + num_back >= len(graph):
+							num_back -= 1
+							break
+						elif graph_rev[i+num_back][j] == ' ':
+							num_back += 1
+						else:
+							break
+					graph_rev[i][j] = graph_rev[i+num_back][j]
+					graph_rev[i+num_back][j] = ' '
+		return graph_rev[::-1]
 
 	def solve_puzzle(self,word_lengths=None):
 		if not word_lengths:
 			word_lengths = self.word_lengths
 		self.total_possible_words = []
-		for coord in self.total_avalable_coords:
+		for coord in self.total_available_coords:
 			cwl = word_lengths[0]
 			if len(word_lengths) == 1:
 				wl = []
@@ -142,7 +173,10 @@ class WordBrain:
 
 	def get_possible_moves(self,position,visited,graph):
 		x,y = position
-		return [pos for pos in [(x-1,y),(x-1,y+1),(x,y+1),(x+1,y+1),
-		(x+1,y),(x+1,y-1),(x,y-1),(x-1,y-1)]
-		if pos in self.total_avalable_coords and pos not in visited
-		and graph[pos[0]][pos[1]] != '']
+		return (({(x-1,y),(x-1,y+1),(x,y+1),(x+1,y+1),
+		(x+1,y),(x+1,y-1),(x,y-1),(x-1,y-1)} \
+		- set(visited)) \
+		& set(self.total_available_coords)) \
+		- set(itertools.chain.from_iterable([[(x,y) 
+			for y,i2 in enumerate(i) if i2 == '']
+		 for x,i in enumerate(graph)]))
