@@ -76,7 +76,6 @@ class WordBrain:
 		word_lengths=None,
 		curr_word_length=None,
 		graph=None):
-
 		# if len(self.total_possible_words) > 2:
 		# 	return
 		# if len(visited) in range(2,20) \
