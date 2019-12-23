@@ -43,8 +43,8 @@ class WBDownloader:
 			raise Exception(f'{self.difficulty} is not supported.')
 			return
 
-		if not 'puzzles' in os.listdir():
-			os.mkdir(os.getcwd()+'\\puzzles')
+		if not 'wb_puzzles' in os.listdir():
+			os.mkdir(os.getcwd()+'\\wb_puzzles')
 
 	def download_one_puzzle(self):
 		try:
@@ -87,12 +87,12 @@ class WBDownloader:
 					list(chunks(puzzle.find_all('span'),len(puzzle.find_all('br'))))],'solution':solution})
 			if from_endpoint:
 				for endpoint in by_endpoint:
-					with open(os.getcwd()+'\\puzzles\\'+endpoint+'.json','w') as download_file:
+					with open(os.getcwd()+'\\wb_puzzles\\'+endpoint+'.json','w') as download_file:
 						json.dump(by_endpoint[endpoint],download_file)
 			else:
 				for puzzle in puzzle_data:
 					word_brain_words += puzzle['solution']
-				with open(os.getcwd()+'\\puzzles\\'+difficulty+'.json','w') as download_file,\
+				with open(os.getcwd()+'\\wb_puzzles\\'+difficulty+'.json','w') as download_file,\
 				open('all_word_brain_words.txt','w') as wbw:
 					json.dump(puzzle_data,download_file)
 					for word in set(word_brain_words):
